@@ -111,10 +111,10 @@
 * ,
 * .
 * ->
-* [something]
-* {something}
-* (something)
-* |something|
+* [index]
+* {block}
+* (parameter)
+* |parameter|
 * //
 * /* */
 
