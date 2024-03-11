@@ -110,7 +110,7 @@
 * //
 * /* */
 
-## Example
+## Examples
 ### Hello World
 ```
 #include<stdio.h>
@@ -123,6 +123,8 @@ int main()
 ```
 ### Safe Pointer
 ```
+#include<safeptr.h>
+
 void pointer1()
 {
     void& safe_pointer = (void&)salloc(sizeof(void) * 4); // safe pointer allocated
