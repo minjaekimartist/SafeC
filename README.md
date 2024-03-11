@@ -87,6 +87,7 @@
 * salloc(safe alloc)
 * realloc
 * free
+* return
 * inline
 * namespace
 * extern
