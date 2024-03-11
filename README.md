@@ -28,7 +28,7 @@
 * Generic in C++ and Rust generate code for every type used for zero-cost abstraction, but they sacrifice compilation time and binary size.
 * Generic-like in SafeC only generates code for type that is implied in source code when building the library, but third-party user can imply their own types in their libraries and programs by given header.
 * Think you are only giving the API but not the implementation.
-* For C/C++ users, think you are giving a header but not a source.
+* For C/C++ users, think you are giving a header but not a source or library.
 * You can give users how to imply your generic function by comments or docs.
 
 ### Why not Rust?
