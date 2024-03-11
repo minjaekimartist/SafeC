@@ -1,6 +1,8 @@
 # SafeC
 ## “Safe Embeddable Assembly”
 
+## Currently an idea project, not implied in any compiler, interpreter, or any such yet!
+
 ### Main Features
 * C Superset
 * Memory-safety
