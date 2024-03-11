@@ -69,6 +69,7 @@
 ### Other syntax
 * static
 * const
+* auto
 * if
 * else
 * switch
@@ -96,8 +97,8 @@
 * \-
 * \*
 * \/
-* “"
-* ‘'
+* ""
+* ''
 * ``
 * !
 * &
@@ -106,6 +107,10 @@
 * ==
 * &&
 * ||
+* ::
+* ,
+* .
+* ->
 * [something]
 * {something}
 * (something)
@@ -126,8 +131,6 @@ int main()
 ```
 ### Safe Pointer
 ```
-#include<safeptr.h>
-
 void pointer1()
 {
     void& safe_pointer = (void&)salloc(sizeof(void) * 4); // safe pointer allocated
