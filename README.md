@@ -134,7 +134,7 @@ void pointer1()
 void& pointer2()
 {
     void& safe_pointer = (void&)salloc(sizeof(void) * 4); // safe pointer allocated
-    return safe_pointer;
+    return safe_pointer; // moves out ownership of safe_pointer
 }
 
 int main()
