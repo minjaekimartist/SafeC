@@ -15,8 +15,8 @@
 * No semantic sugar on the language. Make your own!
 
 ### How safe pointer works?
-* Safe pointer is concrete of 3 sizeof(void) memory space on stack : address, length, and lifetime.
-* Length provides segmentation error. If index is greater than length, it breaks and gives error
+* Safe pointer is a concrete of 3 sizeof(void) memory space on stack : address, length, and lifetime.
+* Length prevents segmentation error. If index is greater than length, it breaks and gives error
 * Lifetime provides memory leak. A single set of brackets counts as a block, which has a lifetime, and safe pointer defined inside a block will be freed when block ends, meaning lifetime of the pointer is over. There’s four ways to avoid it.
     1. Return the pointer, which moves the ownership of pointer to the outer block.
     2. Move the pointer to variable of the outer block.
