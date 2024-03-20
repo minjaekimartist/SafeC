@@ -32,7 +32,7 @@
 * You can give users how to imply your generic function by comments or docs.
 
 ### Why not Rust?
-* To be honest, I use Rust on most of my personal projects which I done interoperate with C/C++. But Rust has a dilemma when using with C/C++. If we’re interfacing with unsafe raw pointers, why do we have to sacrifice time for thinking in different ways than programming in a single language? That’s the first reason came out for designing SafeC project.
+* To be honest, I use Rust on most of my personal projects which I don't inter-communicate with C/C++. But Rust has a dilemma when using with C/C++. If we’re interfacing with unsafe raw pointers, why do we have to sacrifice time for thinking in different ways than programming in a single language? That’s the first reason came out for designing SafeC project.
 * When we are building the lowest level of the software like firmwares and operating systems. Without C ABI and OS native libraries, we cannot use more than half of Rust std libraries, which you have to imply your own yourself or translate existing sources written in C, which is inefficient.
 * Third, enum is heavy in Rust. Enum in C is just a number, while enum in Rust is similar to union in C with enum in C, which makes enum bigger and slower.
 * We got idea of “Safety” from Rust, but lots of safety in Rust depends on idea your are using an existing OS with multithreaded environment that is defined in Rust ABI. For embedded or operating system programmer, it isn’t necessary, but can struggle your way. So we moved out those limitation and gave programmer more freedom.
