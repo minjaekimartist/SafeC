@@ -247,6 +247,7 @@ impl Preprocessor
 
 enum Token
 {
+    LineEnd,
     Preprocessor(Preprocessor),
     Operator(Operator),
     Type(Type),
@@ -281,7 +282,8 @@ impl Token
 {
     fn from(word : &str) -> Vec<Token>
     {
-        if word.starts_with("#") { vec![Token::Preprocessor(Preprocessor::from(&word[1..]).expect("Wrong Preprocessor Token!"))] }
+        if word.ends_with(";") { vec![Token::LineEnd] } 
+        else if word.starts_with("#") { vec![Token::Preprocessor(Preprocessor::from(&word[1..]).expect("Wrong Preprocessor Token!"))] }
         else if !Operator::from(word).is_empty()
         {
             let chunk = Operator::from(word);
