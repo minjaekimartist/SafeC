@@ -74,7 +74,10 @@ enum Operator
     BitwiseXor,
     BitShiftRight,
     BitShiftLeft,
-    Move
+    Move,
+    AccessStruct,
+    AccessStructPointer,
+    AccessEnum
 }
 impl Operator
 {
@@ -86,20 +89,20 @@ impl Operator
         else if input.contains(".")
         {
             let strings : Vec<&str> = input.split(".").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Add)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Add), ContainsOperator::False(String::from(strings[1]))].to_vec()
-        }
-        else if input.contains("::")
-        {
-            let strings : Vec<&str> = input.split("::").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Add)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Add), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return vec![ContainsOperator::True(Operator::AccessStruct)] }
+            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::AccessStruct), ContainsOperator::False(String::from(strings[1]))].to_vec()
         }
         else if input.contains("->")
         {
             let strings : Vec<&str> = input.split("->").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Add)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Add), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return vec![ContainsOperator::True(Operator::AccessStructPointer)] }
+            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::AccessStructPointer), ContainsOperator::False(String::from(strings[1]))].to_vec()
+        }
+        else if input.contains("::")
+        {
+            let strings : Vec<&str> = input.split("::").collect();
+            if strings.is_empty() { return vec![ContainsOperator::True(Operator::AccessEnum)] }
+            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::AccessEnum), ContainsOperator::False(String::from(strings[1]))].to_vec()
         }
         else if input.contains("+")
         {
