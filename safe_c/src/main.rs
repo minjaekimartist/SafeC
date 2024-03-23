@@ -83,6 +83,24 @@ impl Operator
         if input.starts_with("&") { return [ContainsOperator::True(Operator::Reference), ContainsOperator::False(String::from(&input[1..]))].to_vec() }
         else if input.starts_with("*") { return [ContainsOperator::True(Operator::Dereference), ContainsOperator::False(String::from(&input[1..]))].to_vec() }
         else if input.starts_with("!") { return [ContainsOperator::True(Operator::Not), ContainsOperator::False(String::from(&input[1..]))].to_vec() }
+        else if input.contains(".")
+        {
+            let strings : Vec<&str> = input.split(".").collect();
+            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Add)] }
+            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Add), ContainsOperator::False(String::from(strings[1]))].to_vec()
+        }
+        else if input.contains("::")
+        {
+            let strings : Vec<&str> = input.split("::").collect();
+            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Add)] }
+            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Add), ContainsOperator::False(String::from(strings[1]))].to_vec()
+        }
+        else if input.contains("->")
+        {
+            let strings : Vec<&str> = input.split("->").collect();
+            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Add)] }
+            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Add), ContainsOperator::False(String::from(strings[1]))].to_vec()
+        }
         else if input.contains("+")
         {
             let strings : Vec<&str> = input.split("+").collect();
