@@ -77,7 +77,8 @@ enum Operator
     Move,
     AccessStruct,
     AccessStructPointer,
-    AccessEnum
+    AccessEnum,
+    EndLine
 }
 impl Operator
 {
@@ -85,6 +86,12 @@ impl Operator
     {
         if input.starts_with("&") { return [ContainsOperator::True(Operator::Reference), ContainsOperator::False(String::from(&input[1..]))].to_vec() }
         else if input.starts_with("*") { return [ContainsOperator::True(Operator::Dereference), ContainsOperator::False(String::from(&input[1..]))].to_vec() }
+        else if input.contains("!=")
+        {
+            let strings : Vec<&str> = input.split("!=").collect();
+            if strings.is_empty() { return vec![ContainsOperator::True(Operator::NotEqual)] }
+            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::NotEqual), ContainsOperator::False(String::from(strings[1]))].to_vec()
+        }
         else if input.starts_with("!") { return [ContainsOperator::True(Operator::Not), ContainsOperator::False(String::from(&input[1..]))].to_vec() }
         else if input.contains(".")
         {
@@ -134,6 +141,18 @@ impl Operator
             if strings.is_empty() { return vec![ContainsOperator::True(Operator::Remain)] }
             return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Remain), ContainsOperator::False(String::from(strings[1]))].to_vec()
         }
+        else if input.contains("&&")
+        {
+            let strings : Vec<&str> = input.split("&&").collect();
+            if strings.is_empty() { return vec![ContainsOperator::True(Operator::And)] }
+            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::And), ContainsOperator::False(String::from(strings[1]))].to_vec()
+        }
+        else if input.contains("||")
+        {
+            let strings : Vec<&str> = input.split("||").collect();
+            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Or)] }
+            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Or), ContainsOperator::False(String::from(strings[1]))].to_vec()
+        }
         else if input.contains("&")
         {
             let strings : Vec<&str> = input.split("&").collect();
@@ -164,29 +183,11 @@ impl Operator
             if strings.is_empty() { return vec![ContainsOperator::True(Operator::BitShiftLeft)] }
             return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::BitShiftLeft), ContainsOperator::False(String::from(strings[1]))].to_vec()
         }
-        else if input.contains("=")
-        {
-            let strings : Vec<&str> = input.split("=").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Move)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Move), ContainsOperator::False(String::from(strings[1]))].to_vec()
-        }
         else if input.contains("==")
         {
             let strings : Vec<&str> = input.split("==").collect();
             if strings.is_empty() { return vec![ContainsOperator::True(Operator::Equal)] }
             return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Equal), ContainsOperator::False(String::from(strings[1]))].to_vec()
-        }
-        else if input.contains("!=")
-        {
-            let strings : Vec<&str> = input.split("!=").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::NotEqual)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::NotEqual), ContainsOperator::False(String::from(strings[1]))].to_vec()
-        }
-        else if input.contains(">")
-        {
-            let strings : Vec<&str> = input.split(">").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Greater)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Greater), ContainsOperator::False(String::from(strings[1]))].to_vec()
         }
         else if input.contains(">=")
         {
@@ -194,11 +195,11 @@ impl Operator
             if strings.is_empty() { return vec![ContainsOperator::True(Operator::GreaterOrEqual)] }
             return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::GreaterOrEqual), ContainsOperator::False(String::from(strings[1]))].to_vec()
         }
-        else if input.contains("<")
+        else if input.contains(">")
         {
-            let strings : Vec<&str> = input.split("<").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Less)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Less), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            let strings : Vec<&str> = input.split(">").collect();
+            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Greater)] }
+            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Greater), ContainsOperator::False(String::from(strings[1]))].to_vec()
         }
         else if input.contains("<=")
         {
@@ -206,18 +207,25 @@ impl Operator
             if strings.is_empty() { return vec![ContainsOperator::True(Operator::LessOrEqual)] }
             return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::LessOrEqual), ContainsOperator::False(String::from(strings[1]))].to_vec()
         }
-        else if input.contains("&&")
+        else if input.contains("<")
         {
-            let strings : Vec<&str> = input.split("&&").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::And)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::And), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            let strings : Vec<&str> = input.split("<").collect();
+            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Less)] }
+            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Less), ContainsOperator::False(String::from(strings[1]))].to_vec()
         }
-        else if input.contains("||")
+        else if input.contains("=")
         {
-            let strings : Vec<&str> = input.split("||").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Or)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Or), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            let strings : Vec<&str> = input.split("=").collect();
+            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Move)] }
+            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Move), ContainsOperator::False(String::from(strings[1]))].to_vec()
         }
+        else if input.contains(",")
+        {
+            let strings : Vec<&str> = input.split(",").collect();
+            if strings.is_empty() { return vec![] }
+            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::False(String::from(strings[1]))].to_vec()
+        }
+        
         vec![]
     }
 }
@@ -268,6 +276,9 @@ impl Preprocessor
 
 enum Token
 {
+    SinglineComment,
+    CommentStart,
+    CommentEnd,
     LineEnd,
     Preprocessor(Preprocessor),
     Operator(Operator),
@@ -303,7 +314,7 @@ impl Token
 {
     fn from(word : &str) -> Vec<Token>
     {
-        if word.ends_with(";") { vec![Token::LineEnd] } 
+        else if word.ends_with(";") { vec![Token::LineEnd] } 
         else if word.starts_with("#") { vec![Token::Preprocessor(Preprocessor::from(&word[1..]).expect("Wrong Preprocessor Token!"))] }
         else if !Operator::from(word).is_empty()
         {
