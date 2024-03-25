@@ -230,7 +230,7 @@ impl Operator
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub(crate) enum Preprocessor
 {
     If,
@@ -317,7 +317,12 @@ impl Token
 {
     fn from(word : &str) -> Vec<Token>
     {
-        if word.ends_with(";") { vec![Token::LineEnd] } 
+        if word.ends_with(";")
+        {
+            let mut tokens = Token::from(&word[..word.len() - 1]);
+            tokens.append(&mut vec![Token::LineEnd]);
+            tokens
+        } 
         else if word.starts_with("#") { vec![Token::Preprocessor(Preprocessor::from(&word[1..]).expect("Wrong Preprocessor Token!"))] }
         else if !Operator::from(word).is_empty()
         {
@@ -334,12 +339,102 @@ impl Token
             return vector
         }
         else if Type::from(word).is_some() { vec![Token::Type(Type::from(word).unwrap())] }
-        else if word.contains("{") { vec![Token::BlockStart] }
-        else if word.contains("}") { vec![Token::BlockEnd] }
-        else if word.contains("(") { vec![Token::ParenthesisStart] }
-        else if word.contains(")") { vec![Token::ParenthesisEnd] }
-        else if word.contains("[") { vec![Token::BracketStart] }
-        else if word.contains("]") { vec![Token::BracketEnd] }
+        else if word.contains("{")
+        {
+            let words : Vec<&str> = word.split("{").collect();
+            let mut tokens = vec![];
+            if words.len() > 1
+            {
+                for word in 0..words.len() - 1
+                {
+                    tokens.append(&mut Token::from(words[word]));
+                    tokens.push(Token::BlockStart);
+                }
+                tokens.append(&mut Token::from(words[words.len() - 1]));
+            }
+            else { tokens.push(Token::BlockStart); }
+            tokens
+        }
+        else if word.contains("}")
+        {
+            let words : Vec<&str> = word.split("}").collect();
+            let mut tokens = vec![];
+            if words.len() > 1
+            {
+                for word in 0..words.len() - 1
+                {
+                    tokens.append(&mut Token::from(words[word]));
+                    tokens.push(Token::BlockEnd);
+                }
+                tokens.append(&mut Token::from(words[words.len() - 1]));
+            }
+            else { tokens.push(Token::BlockEnd); }
+            tokens
+        }
+        else if word.contains("(")
+        {
+            let words : Vec<&str> = word.split("(").collect();
+            let mut tokens = vec![];
+            if words.len() > 1
+            {
+                for word in 0..words.len() - 1
+                {
+                    tokens.append(&mut Token::from(words[word]));
+                    tokens.push(Token::ParenthesisStart);
+                }
+                tokens.append(&mut Token::from(words[words.len() - 1]));
+            }
+            else { tokens.push(Token::ParenthesisStart); }
+            tokens
+        }
+        else if word.contains(")")
+        {
+            let words : Vec<&str> = word.split("(").collect();
+            let mut tokens = vec![];
+            if words.len() > 1
+            {
+                for word in 0..words.len() - 1
+                {
+                    tokens.append(&mut Token::from(words[word]));
+                    tokens.push(Token::ParenthesisEnd);
+                }
+                tokens.append(&mut Token::from(words[words.len() - 1]));
+            }
+            else { tokens.push(Token::ParenthesisEnd); }
+            tokens
+        }
+        else if word.contains("[")
+        {
+            let words : Vec<&str> = word.split("[").collect();
+            let mut tokens = vec![];
+            if words.len() > 1
+            {
+                for word in 0..words.len() - 1
+                {
+                    tokens.append(&mut Token::from(words[word]));
+                    tokens.push(Token::BracketStart);
+                }
+                tokens.append(&mut Token::from(words[words.len() - 1]));
+            }
+            else { tokens.push(Token::BracketStart); }
+            tokens
+        }
+        else if word.contains("]")
+        {
+            let words : Vec<&str> = word.split("]").collect();
+            let mut tokens = vec![];
+            if words.len() > 1
+            {
+                for word in 0..words.len() - 1
+                {
+                    tokens.append(&mut Token::from(words[word]));
+                    tokens.push(Token::BracketEnd);
+                }
+                tokens.append(&mut Token::from(words[words.len() - 1]));
+            }
+            else { tokens.push(Token::BracketEnd); }
+            tokens
+        }
         else if word == "return" { vec![Token::Return] }
         else if word == "static" { vec![Token::Static] }
         else if word == "const" { vec![Token::Const] }
@@ -364,13 +459,90 @@ impl Token
     }
 }
 
-pub(crate) fn lexer(input : &[u8]) -> Vec<Token>
+pub(crate) fn lexer(text : &str) -> Vec<Token>
 {
-    let text = String::from_utf8(input.to_owned()).expect("Invalid UTF-8 Data.");
-    let words: Vec<&str> = text.split_whitespace().collect();
     let mut output = vec![];
-
-    for word in words { output.append(&mut Token::from(word)); }
+    let lines: Vec<&str> = text.lines().collect();
+    for line in lines
+    {
+        let words: Vec<&str> = line.split_whitespace().collect();
+        let mut index = 0;
+        loop
+        {
+            if index >= words.len() { break; }
+            if words[index].contains("\"")
+            {
+                let mut string = String::new();
+                let splitted_words : Vec<&str> = words[index].split("\"").collect();
+                let mut token = Token::from(splitted_words[0]);
+                token.pop();
+                output.append(&mut token);
+                string.push_str(splitted_words[1]);
+                index += 1;
+                if splitted_words.len() < 3
+                {
+                    loop
+                    {
+                        if words[index].contains("\"")
+                        {
+                            let splitted_words : Vec<&str> = words[index].split("\"").collect();
+                            string.push_str(splitted_words[0]);
+                            output.push(Token::Str(string));
+                            output.append(&mut Token::from(splitted_words[1]));
+                            index += 1;
+                            break;
+                        }
+                        string.push_str(&words[index]);
+                        index += 1;
+                    }
+                }
+                else if splitted_words.len() > 3
+                {
+                    loop
+                    {
+                        if words[index].contains("\"")
+                        {
+                            let splitted_words : Vec<&str> = words[index].split("\"").collect();
+                            string.push_str(splitted_words[0]);
+                            output.push(Token::Str(string));
+                            output.append(&mut Token::from(splitted_words[1]));
+                            index += 1;
+                            break;
+                        }
+                        string.push_str(&words[index]);
+                        index += 1;
+                    }
+                    for word in index..splitted_words.len()
+                    {
+                        output.append(&mut Token::from(splitted_words[word]));
+                    }
+                }
+            }
+            if index >= words.len() { break; }
+            let mut token = Token::from(words[index]);
+            match token[0]
+            {
+                Token::Preprocessor(preprocessor) =>
+                {
+                    output.push(Token::Preprocessor(preprocessor));
+                    token.remove(0);
+                    output.append(&mut token);
+                    index += 1;
+                    let mut string = String::new();
+                    while words[index] != ""
+                    {
+                        string.push_str(&words[index]);
+                        index += 1;
+                        if index >= words.len() { break; }
+                    }
+                    output.push(Token::Str(string));
+                    output.push(Token::Str(String::from("")));
+                },
+                _ => { output.append(&mut token); }
+            }
+            index += 1;
+        }
+    }
 
     return output;
 }

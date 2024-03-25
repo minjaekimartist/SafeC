@@ -12,7 +12,7 @@ fn main()
     let mut is_release = false;
     let mut code = vec![];
 
-    for arg in &args
+    for arg in &args[1..]
     {
         if is_link
         {
@@ -24,14 +24,16 @@ fn main()
         else
         {
             let mut input = vec![];
-            std::io::Read::read(&mut std::fs::File::open(arg).expect("Failed to open the file."), &mut input).expect("Failed to read the file.");
-            code.append(&mut lexer(&input));
+            let mut file = std::fs::File::open(arg).expect("Failed to open the file.");
+            std::io::Read::read_to_end(&mut file, &mut input).expect("Failed to read the file.");
+            let text = String::from_utf8(input).expect("Failed to read as UTF-8");
+            code.append(&mut lexer(&text));
         }
     }
-    let lines : Vec<&[Token]> = code.split(|token| *token == Token::LineEnd).collect();
+    let lines : Vec<&[Token]> = code.split(|token| *token == Token::Str(String::from(""))).collect();
     for line in lines
     {
-        println!("{:?}", line);
+        // parse
     }
     if is_release
     {
