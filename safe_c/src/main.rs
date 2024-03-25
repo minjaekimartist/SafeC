@@ -30,8 +30,7 @@ fn main()
             code.append(&mut lexer(&text));
         }
     }
-    let lines : Vec<&[Token]> = code.split(|token| *token == Token::Str(String::from(""))).collect();
-    for line in lines
+    for line in &code
     {
         parser(line);
     }
