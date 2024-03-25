@@ -1,4 +1,4 @@
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub(crate) enum Type
 {
     Auto,
@@ -20,36 +20,54 @@ pub(crate) enum Type
 }
 impl Type
 {
-    fn from(input : &str) -> Option<Type>
+    fn from(input : &str) -> Option<Vec<Token>>
     {
-        match input
+        let input_vec;
+        let pointer = if input.contains("*")
         {
-            "auto" => Some(Type::Auto),
-            "signed" => Some(Type::Signed),
-            "unsigned" => Some(Type::Unsigned),
-            "char" => Some(Type::Char),
-            "short" => Some(Type::Short),
-            "int" => Some(Type::Int),
-            "long" => Some(Type::Long),
-            "float" => Some(Type::Float),
-            "double" => Some(Type::Double),
-            "bool" => Some(Type::Bool),
-            "void" => Some(Type::Void),
-            "enum" => Some(Type::Enum),
-            "union" => Some(Type::Union),
-            "struct" => Some(Type::Struct),
-            "*" => Some(Type::RawPointer),
-            "&" => Some(Type::SafePointer),
-            _ => None
+            input_vec = input.split("*").collect();
+            Some(Type::RawPointer)
+        }
+        else if input.contains("&")
+        {
+            input_vec = input.split("&").collect();
+            Some(Type::SafePointer)
+        }
+        else
+        {
+            input_vec = vec![input];
+            None
+        };
+
+        let c_type = if input_vec[0] == "auto" { Some(Type::Auto) }
+        else if input_vec[0] == "signed" { Some(Type::Signed) }
+        else if input_vec[0] == "unsigned" { Some(Type::Unsigned) }
+        else if input_vec[0] == "char" { Some(Type::Char) }
+        else if input_vec[0] == "short" { Some(Type::Short) }
+        else if input_vec[0] == "int" { Some(Type::Int) }
+        else if input_vec[0] == "long" { Some(Type::Long) }
+        else if input_vec[0] == "float" { Some(Type::Float) }
+        else if input_vec[0] == "double" { Some(Type::Double) }
+        else if input_vec[0] == "bool" { Some(Type::Bool) }
+        else if input_vec[0] == "void" { Some(Type::Void) }
+        else if input_vec[0] == "enum" { Some(Type::Enum) }
+        else if input_vec[0] == "union" { Some(Type::Union) }
+        else if input_vec[0] == "struct" { Some(Type::Struct) }
+        else { None };
+
+        if c_type.is_none() { None }
+        else
+        {
+            let mut vector = vec![Token::Type(c_type.unwrap())];
+            if pointer.is_some() { vector.push(Token::Type(pointer.unwrap())); }
+            if input_vec.len() > 0
+            {
+                for index in 1..input_vec.len() { vector.append(&mut Token::from(input_vec[index])); }
+            }
+
+            return Some(vector)
         }
     }
-}
-
-#[derive(Clone)]
-enum ContainsOperator
-{
-    True(Operator),
-    False(String)
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -83,151 +101,233 @@ pub(crate) enum Operator
 }
 impl Operator
 {
-    fn from(input : &str) -> Vec<ContainsOperator>
+    fn from(input : &str) -> Option<Vec<Token>>
     {
-        if input.starts_with("&") { return [ContainsOperator::True(Operator::Reference), ContainsOperator::False(String::from(&input[1..]))].to_vec() }
-        else if input.starts_with("*") { return [ContainsOperator::True(Operator::Dereference), ContainsOperator::False(String::from(&input[1..]))].to_vec() }
+        if input.starts_with("&")
+        {
+            let mut vector = vec![Token::Operator(Operator::Reference)];
+            vector.append(&mut Token::from(&input[1..]));
+            Some(vector)
+        }
+        else if input.starts_with("*")
+        {
+            let mut vector = vec![Token::Operator(Operator::Dereference)];
+            vector.append(&mut Token::from(&input[1..]));
+            Some(vector)
+        }
         else if input.contains("!=")
         {
             let strings : Vec<&str> = input.split("!=").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::NotEqual)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::NotEqual), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::NotEqual)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::NotEqual));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
-        else if input.starts_with("!") { return [ContainsOperator::True(Operator::Not), ContainsOperator::False(String::from(&input[1..]))].to_vec() }
+        else if input.starts_with("!")
+        {
+            let mut vector = vec![Token::Operator(Operator::Not)];
+            vector.append(&mut Token::from(&input[1..]));
+            Some(vector)
+        }
         else if input.contains(".")
         {
             let strings : Vec<&str> = input.split(".").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::AccessStruct)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::AccessStruct), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::AccessStruct)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::AccessStruct));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains("->")
         {
             let strings : Vec<&str> = input.split("->").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::AccessStructPointer)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::AccessStructPointer), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::AccessStructPointer)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::AccessStructPointer));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains("::")
         {
             let strings : Vec<&str> = input.split("::").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::AccessEnum)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::AccessEnum), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::AccessEnum)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::AccessEnum));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains("+")
         {
             let strings : Vec<&str> = input.split("+").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Add)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Add), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::Add)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::Add));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains("-")
         {
             let strings : Vec<&str> = input.split("-").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Subtract)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Subtract), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::Subtract)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::Subtract));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains("*")
         {
             let strings : Vec<&str> = input.split("*").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Multiply)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Multiply), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::Multiply)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::Multiply));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains("/")
         {
             let strings : Vec<&str> = input.split("/").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Divide)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Divide), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::Divide)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::Divide));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains("%")
         {
             let strings : Vec<&str> = input.split("%").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Remain)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Remain), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::Remain)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::Remain));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains("&&")
         {
             let strings : Vec<&str> = input.split("&&").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::And)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::And), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::And)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::And));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains("||")
         {
             let strings : Vec<&str> = input.split("||").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Or)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Or), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::Or)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::Or));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
-        else if input.contains("&")
+        else if input == "&"
         {
             let strings : Vec<&str> = input.split("&").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::BitwiseAnd)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::BitwiseAnd), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::BitwiseAnd)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::BitwiseAnd));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
-        else if input.contains("|")
+        else if input == "|"
         {
             let strings : Vec<&str> = input.split("|").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::BitwiseOr)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::BitwiseOr), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::BitwiseOr)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::BitwiseOr));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
-        else if input.contains("^")
+        else if input == "^"
         {
             let strings : Vec<&str> = input.split("^").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::BitwiseXor)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::BitwiseXor), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::BitwiseXor)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::BitwiseXor));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains(">>")
         {
             let strings : Vec<&str> = input.split(">>").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::BitShiftRight)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::BitShiftRight), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::BitShiftRight)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::BitShiftRight));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains("<<")
         {
             let strings : Vec<&str> = input.split("<<").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::BitShiftLeft)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::BitShiftLeft), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::BitShiftLeft)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::BitShiftLeft));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains("==")
         {
             let strings : Vec<&str> = input.split("==").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Equal)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Equal), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::Equal)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::Equal));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains(">=")
         {
             let strings : Vec<&str> = input.split(">=").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::GreaterOrEqual)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::GreaterOrEqual), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::GreaterOrEqual)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::GreaterOrEqual));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains(">")
         {
             let strings : Vec<&str> = input.split(">").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Greater)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Greater), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::Greater)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::Greater));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains("<=")
         {
             let strings : Vec<&str> = input.split("<=").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::LessOrEqual)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::LessOrEqual), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::LessOrEqual)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::LessOrEqual));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains("<")
         {
             let strings : Vec<&str> = input.split("<").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Less)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Less), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::Less)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::Less));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains("=")
         {
             let strings : Vec<&str> = input.split("=").collect();
-            if strings.is_empty() { return vec![ContainsOperator::True(Operator::Move)] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::True(Operator::Move), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return Some(vec![Token::Operator(Operator::Move)]) }
+            let mut vector = Token::from(strings[0]);
+            vector.push(Token::Operator(Operator::Move));
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
         else if input.contains(",")
         {
             let strings : Vec<&str> = input.split(",").collect();
-            if strings.is_empty() { return vec![] }
-            return [ContainsOperator::False(String::from(strings[0])), ContainsOperator::False(String::from(strings[1]))].to_vec()
+            if strings.is_empty() { return None }
+            let mut vector = Token::from(strings[0]);
+            vector.append(&mut Token::from(strings[1]));
+            Some(vector)
         }
-        
-        vec![]
+        else { None }
     }
 }
 
@@ -276,7 +376,7 @@ impl Preprocessor
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub(crate) enum Token
 {
     Return,
@@ -322,33 +422,20 @@ impl Token
             tokens
         } 
         else if word.starts_with("#") { vec![Token::Preprocessor(Preprocessor::from(&word[1..]).expect("Wrong Preprocessor Token!"))] }
-        else if !Operator::from(word).is_empty()
-        {
-            let chunk = Operator::from(word);
-            let mut vector = vec![];
-            for element in &chunk
-            {               
-                match element
-                {
-                    ContainsOperator::True(operator) => { vector.push(Token::Operator(*operator)); }
-                    ContainsOperator::False(string) => { vector.append(&mut Token::from(&string)); }
-                }
-            }
-            return vector
-        }
-        else if Type::from(word).is_some() { vec![Token::Type(Type::from(word).unwrap())] }
+        else if Operator::from(word).is_some() { Operator::from(word).unwrap() }
+        else if Type::from(word).is_some() { Type::from(word).unwrap() }
         else if word.contains("{")
         {
             let words : Vec<&str> = word.split("{").collect();
             let mut tokens = vec![];
-            if words.len() > 1
+            if words.len() > 0
             {
-                for word in 0..words.len() - 1
+                for word in 0..words.len()
                 {
                     tokens.append(&mut Token::from(words[word]));
                     tokens.push(Token::BlockStart);
                 }
-                tokens.append(&mut Token::from(words[words.len() - 1]));
+                tokens.pop();
             }
             else { tokens.push(Token::BlockStart); }
             tokens
@@ -357,14 +444,14 @@ impl Token
         {
             let words : Vec<&str> = word.split("}").collect();
             let mut tokens = vec![];
-            if words.len() > 1
+            if words.len() > 0
             {
-                for word in 0..words.len() - 1
+                for word in 0..words.len()
                 {
                     tokens.append(&mut Token::from(words[word]));
                     tokens.push(Token::BlockEnd);
                 }
-                tokens.append(&mut Token::from(words[words.len() - 1]));
+                tokens.pop();
             }
             else { tokens.push(Token::BlockEnd); }
             tokens
@@ -373,30 +460,30 @@ impl Token
         {
             let words : Vec<&str> = word.split("(").collect();
             let mut tokens = vec![];
-            if words.len() > 1
+            if words.len() > 0
             {
-                for word in 0..words.len() - 1
+                for word in 0..words.len()
                 {
                     tokens.append(&mut Token::from(words[word]));
                     tokens.push(Token::ParenthesisStart);
                 }
-                tokens.append(&mut Token::from(words[words.len() - 1]));
+                tokens.pop();
             }
             else { tokens.push(Token::ParenthesisStart); }
             tokens
         }
         else if word.contains(")")
         {
-            let words : Vec<&str> = word.split("(").collect();
+            let words : Vec<&str> = word.split(")").collect();
             let mut tokens = vec![];
-            if words.len() > 1
+            if words.len() > 0
             {
-                for word in 0..words.len() - 1
+                for word in 0..words.len()
                 {
                     tokens.append(&mut Token::from(words[word]));
                     tokens.push(Token::ParenthesisEnd);
                 }
-                tokens.append(&mut Token::from(words[words.len() - 1]));
+                tokens.pop();
             }
             else { tokens.push(Token::ParenthesisEnd); }
             tokens
@@ -405,14 +492,14 @@ impl Token
         {
             let words : Vec<&str> = word.split("[").collect();
             let mut tokens = vec![];
-            if words.len() > 1
+            if words.len() > 0
             {
-                for word in 0..words.len() - 1
+                for word in 0..words.len()
                 {
                     tokens.append(&mut Token::from(words[word]));
                     tokens.push(Token::BracketStart);
                 }
-                tokens.append(&mut Token::from(words[words.len() - 1]));
+                tokens.pop();
             }
             else { tokens.push(Token::BracketStart); }
             tokens
@@ -421,14 +508,14 @@ impl Token
         {
             let words : Vec<&str> = word.split("]").collect();
             let mut tokens = vec![];
-            if words.len() > 1
+            if words.len() > 0
             {
-                for word in 0..words.len() - 1
+                for word in 0..words.len()
                 {
                     tokens.append(&mut Token::from(words[word]));
                     tokens.push(Token::BracketEnd);
                 }
-                tokens.append(&mut Token::from(words[words.len() - 1]));
+                tokens.pop();
             }
             else { tokens.push(Token::BracketEnd); }
             tokens
@@ -457,9 +544,9 @@ impl Token
     }
 }
 
-pub(crate) fn lexer(text : &str) -> Vec<Token>
+pub(crate) fn lexer(text : &str) -> Vec<Vec<Token>>
 {
-    let mut output = vec![];
+    let mut result = vec![];
     let lines: Vec<&str> = text.lines().collect();
     let mut line = 0;
     loop
@@ -467,6 +554,7 @@ pub(crate) fn lexer(text : &str) -> Vec<Token>
         if line >= lines.len() { break; }
         let words: Vec<&str> = lines[line].split_whitespace().collect();
         let mut index = 0;
+        let mut output = vec![];
         loop
         {
             if index >= words.len() { break; }
@@ -638,14 +726,26 @@ pub(crate) fn lexer(text : &str) -> Vec<Token>
                         if index >= words.len() { break; }
                     }
                     output.push(Token::Str(string));
-                    output.push(Token::Str(String::from("")));
                 },
                 _ => { output.append(&mut token); }
             }
             index += 1;
         }
+        let mut index = 0;
+        while index < output.len()
+        {
+            if output[index] == Token::Str(String::from("")) { output.remove(index); }
+            index += 1;
+        }
+        let output: Vec<&[Token]> = output.split(|token| *token == Token::LineEnd).collect();
+        for array in output { result.push(array.to_owned()); }
         line += 1;
     }
-
-    return output;
+    let mut index = 0;
+    while index < result.len()
+    {
+        if result[index] == vec![] { result.remove(index); }
+            index += 1;
+    }
+    return result;
 }
