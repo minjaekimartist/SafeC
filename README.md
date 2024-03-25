@@ -40,6 +40,7 @@
 * But for software developers on established platforms, (i.e. Windows, macOS, Linux) we highly recommend Rust! Rust is even safer than SafeC, especially for multithreaded environments, and has “semantic sugar” that will make your development much easier. You don’t have to think about C ABI, OS API, intrinsics, or etc in most cases.
 
 ### Types
+* auto
 * numbers(signed or unsigned) : char, short, int, long, float, double
 * bool
 * void
@@ -49,7 +50,7 @@
 * function(no syntax)
 * raw pointer(*)
 * safe pointer(&)
-* tuple(())
+* tuple(type, type)
 ### Preprocessor syntax
 * if
 * elif
@@ -67,9 +68,10 @@
 * pragma
 * defined
 ### Other syntax
+* //
+* /* */
 * static
 * const
-* auto
 * if
 * else
 * switch
@@ -92,31 +94,41 @@
 * inline
 * namespace
 * extern
-* =
+### Operator
+* &
+* \*
+* !=
+* !
+* .
+* ->
+* ::
+* ,
+* ;
 * \+
 * \-
 * \*
 * \/
-* ""
-* ''
-* ``
-* !
+* \%
+* &&
+* ||
 * &
 * |
 * ^
+* <<
+* >>
 * ==
-* &&
+* >=
+* >
+* <=
+* <
+* =
+* \"
+* \'
+* \`
 * ||
-* ::
-* ,
-* .
-* ->
-* [index]
-* {block}
-* (parameter)
-* |parameter|
-* //
-* /* */
+* []
+* {}
+* ()
 
 ## Examples
 ### Hello World
