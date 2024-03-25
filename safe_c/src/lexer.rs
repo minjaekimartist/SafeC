@@ -735,7 +735,7 @@ pub(crate) fn lexer(text : &str) -> Vec<Vec<Token>>
         while index < output.len()
         {
             if output[index] == Token::Str(String::from("")) { output.remove(index); }
-            index += 1;
+            else { index += 1; }
         }
         let output: Vec<&[Token]> = output.split(|token| *token == Token::LineEnd).collect();
         for array in output { result.push(array.to_owned()); }
