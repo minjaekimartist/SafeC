@@ -14,7 +14,6 @@ pub(crate) enum Type
     Enum,
     Union,
     Struct,
-    Function,
     RawPointer,
     SafePointer
 }
@@ -279,9 +278,6 @@ impl Preprocessor
 pub(crate) enum Token
 {
     Return,
-    SinglineComment,
-    CommentStart,
-    CommentEnd,
     LineEnd,
     Preprocessor(Preprocessor),
     Operator(Operator),
@@ -463,13 +459,21 @@ pub(crate) fn lexer(text : &str) -> Vec<Token>
 {
     let mut output = vec![];
     let lines: Vec<&str> = text.lines().collect();
-    for line in lines
+    let mut line = 0;
+    loop
     {
-        let words: Vec<&str> = line.split_whitespace().collect();
+        if line >= lines.len() { break; }
+        let words: Vec<&str> = lines[line].split_whitespace().collect();
         let mut index = 0;
         loop
         {
             if index >= words.len() { break; }
+            if words[index].contains("/*")
+            {
+                if lines[line].contains("*/") { break; }
+                line += 1;
+            }
+            if words[index] == "//" { break; }
             if words[index].contains("\"")
             {
                 let mut string = String::new();
@@ -542,6 +546,7 @@ pub(crate) fn lexer(text : &str) -> Vec<Token>
             }
             index += 1;
         }
+        line += 1;
     }
 
     return output;

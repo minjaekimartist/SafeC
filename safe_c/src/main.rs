@@ -33,7 +33,7 @@ fn main()
     let lines : Vec<&[Token]> = code.split(|token| *token == Token::Str(String::from(""))).collect();
     for line in lines
     {
-        // parse
+        parser(line);
     }
     if is_release
     {
