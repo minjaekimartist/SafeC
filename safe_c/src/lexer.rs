@@ -524,6 +524,102 @@ pub(crate) fn lexer(text : &str) -> Vec<Token>
                     }
                 }
             }
+            if words[index].contains("\'")
+            {
+                let mut string = String::new();
+                let splitted_words : Vec<&str> = words[index].split("\'").collect();
+                let mut token = Token::from(splitted_words[0]);
+                token.pop();
+                output.append(&mut token);
+                string.push_str(splitted_words[1]);
+                index += 1;
+                if splitted_words.len() < 3
+                {
+                    loop
+                    {
+                        if words[index].contains("\'")
+                        {
+                            let splitted_words : Vec<&str> = words[index].split("\'").collect();
+                            string.push_str(splitted_words[0]);
+                            output.push(Token::Str(string));
+                            output.append(&mut Token::from(splitted_words[1]));
+                            index += 1;
+                            break;
+                        }
+                        string.push_str(&words[index]);
+                        index += 1;
+                    }
+                }
+                else if splitted_words.len() > 3
+                {
+                    loop
+                    {
+                        if words[index].contains("\'")
+                        {
+                            let splitted_words : Vec<&str> = words[index].split("\'").collect();
+                            string.push_str(splitted_words[0]);
+                            output.push(Token::Str(string));
+                            output.append(&mut Token::from(splitted_words[1]));
+                            index += 1;
+                            break;
+                        }
+                        string.push_str(&words[index]);
+                        index += 1;
+                    }
+                    for word in index..splitted_words.len()
+                    {
+                        output.append(&mut Token::from(splitted_words[word]));
+                    }
+                }
+            }
+            if words[index].contains("`")
+            {
+                let mut string = String::new();
+                let splitted_words : Vec<&str> = words[index].split("`").collect();
+                let mut token = Token::from(splitted_words[0]);
+                token.pop();
+                output.append(&mut token);
+                string.push_str(splitted_words[1]);
+                index += 1;
+                if splitted_words.len() < 3
+                {
+                    loop
+                    {
+                        if words[index].contains("`")
+                        {
+                            let splitted_words : Vec<&str> = words[index].split("`").collect();
+                            string.push_str(splitted_words[0]);
+                            output.push(Token::Str(string));
+                            output.append(&mut Token::from(splitted_words[1]));
+                            index += 1;
+                            break;
+                        }
+                        string.push_str(&words[index]);
+                        index += 1;
+                    }
+                }
+                else if splitted_words.len() > 3
+                {
+                    loop
+                    {
+                        if words[index].contains("`")
+                        {
+                            let splitted_words : Vec<&str> = words[index].split("`").collect();
+                            string.push_str(splitted_words[0]);
+                            output.push(Token::Str(string));
+                            output.append(&mut Token::from(splitted_words[1]));
+                            index += 1;
+                            break;
+                        }
+                        string.push_str(&words[index]);
+                        index += 1;
+                    }
+                    for word in index..splitted_words.len()
+                    {
+                        output.append(&mut Token::from(splitted_words[word]));
+                    }
+                }
+            }
             if index >= words.len() { break; }
             let mut token = Token::from(words[index]);
             match token[0]
