@@ -1,6 +1,7 @@
 #[derive(PartialEq, Debug)]
 pub(crate) enum Type
 {
+    Auto,
     Signed,
     Unsigned,
     Char,
@@ -23,6 +24,7 @@ impl Type
     {
         match input
         {
+            "auto" => Some(Type::Auto),
             "signed" => Some(Type::Signed),
             "unsigned" => Some(Type::Unsigned),
             "char" => Some(Type::Char),
