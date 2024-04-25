@@ -50,7 +50,7 @@
 * function(no syntax)
 * raw pointer(*)
 * safe pointer(&)
-* tuple(type, type)
+
 ### Preprocessor syntax
 * if
 * elif
