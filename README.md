@@ -105,7 +105,7 @@ int Foo(int a, int b)
 { int, int } foo = { 1, 2 };
 printf("%d, %d", foo.0, foo.1);
 ```
-* Method is a default function for struct object.
+* Method is a default function of function pointer in struct object.
 ```
 typedef struct foo
 {
