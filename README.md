@@ -29,7 +29,16 @@
 * Generic-like in SafeC only generates code for type that is implied in source code when building the library, but third-party user can imply their own types in their libraries and programs by given header.
 * Think you are only giving the API but not the implementation.
 * For C/C++ users, think you are giving a header but not a source or library.
-* You can give users how to imply your generic function by comments or docs.
+* Library developers can give users how to imply their generic function by comments or docs.
+
+### Other Safety Features
+* Unless in unsafe scope, struct must have all the fields before the object is used.
+* Unless in unsafe scope, switch must match out every possible value.
+* Unless in unsafe scope, raw pointer and union are avoided. Instead, use safe pointer and unionum.
+* Unless in unsafe scope, type casting must be avoided unless the type includes override method casting to desired type. (Primitive types can be casted.)
+
+## Unsafe Scope
+Unsafe scope(or unsafe block) exists to use C codes directly, or to optimize the performance without overhead. In unsafe scope, every features avoided in the language is allowed if it follows C standard.
 
 ### Why not Rust?
 * To be honest, I use Rust on most of my personal projects which I don't inter-communicate with C/C++. But Rust has a dilemma when using with C/C++. If we’re interfacing with unsafe raw pointers, why do we have to sacrifice time for thinking in different ways than programming in a single language? That’s the first reason came out for designing SafeC project.
@@ -50,6 +59,7 @@
 * function(no syntax)
 * raw pointer(*)
 * safe pointer(&)
+* unionum (enum with union like enum in Rust)
 
 ### Preprocessor syntax
 * if
@@ -94,6 +104,9 @@
 * inline
 * namespace
 * extern
+* generic
+* override
+* unsafe
 ### Operator
 * &
 * \*
@@ -161,4 +174,37 @@ int main()
     void& pointer = pointer2(); // safe pointer allocated and assigned to variable "pointer"
     return 0;
 } // safe pointer in variable "pointer" freed.
+```
+### Operator Override
+```
+typedef struct foo
+{
+    double a;
+    double b;
+    foo (add* override)(foo& x, foo& y);
+} Foo;
+
+double Foo.add(Foo& x, Foo& y) default
+{
+    return Foo { .a = x->a + y->a, .b = x->b + y->b };
+}
+```
+### Generic
+```
+typedef struct
+{
+    generic T;
+    T a;
+    T b;
+} Foo;
+
+generic T foo_implement(Foo& bar)
+{
+    return bar.a + bar.b;    // If generic of bar doesn't match generic T or generic T doesn't have operator override add, it fails to compile.
+}
+
+generic T bar(T a, T b)
+{
+    return a + b;    // If generic T doesn't have operator override add, it fails to compile.
+}
 ```
