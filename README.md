@@ -7,7 +7,7 @@
 * C Superset
 * Memory-safety
 * Type-safety
-* Modern features(generic-like, namespace, closure, tuple, operator override)
+* Modern features(generic-like, namespace, closure, tuple, method, operator override)
 * LLVM Backend
 
 ### Concept
@@ -102,6 +102,21 @@ int Foo(int a, int b)
 { int, int } foo = { 1, 2 };
 printf("%d, %d", foo.0, foo.1);
 ```
+* Method is a default function for struct object.
+```
+typedef struct foo
+{
+    double a;
+    double b;
+    double (bar*)(foo& self);
+} Foo;
+
+double Foo.bar(foo& self) default
+{
+    return a + b;
+}
+
+```
 * Operator override is a method to use standard operators to certain type, including arthmetic operator, logic operator, type casting, indexing, etc.
 ```
 typedef struct foo
@@ -192,6 +207,7 @@ Unsafe scope(or unsafe block) exists to use C codes directly, or to optimize the
 * extern
 * generic
 * override
+* default
 * unsafe
 ### Operator
 * &
