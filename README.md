@@ -232,10 +232,10 @@ Unsafe scope(or unsafe block) exists to use C codes directly, or to optimize the
 * |
 * ^
 * <<
-* >>
+* \>\>
 * ==
-* >=
-* >
+* \>=
+* \>
 * <=
 * <
 * =
