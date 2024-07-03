@@ -62,7 +62,9 @@ typedef struct
 
 generic T foo_implement(Foo& bar)
 {
-    return bar.a + bar.b;    // If generic of bar doesn't match generic T or generic T doesn't have operator override add, it fails to compile.
+    return bar.a + bar.b;
+    // If generic of bar doesn't match generic T
+    // or generic T doesn't have operator override add, it fails to compile.
 }
 
 generic T bar(T a, T b)
