@@ -69,7 +69,8 @@ generic T foo_implement(Foo& bar)
 
 generic T bar(T a, T b)
 {
-    return a + b;    // If generic T doesn't have operator override add, it fails to compile.
+    return a + b;
+    // If generic T doesn't have operator override add, it fails to compile.
 }
 ```
 
