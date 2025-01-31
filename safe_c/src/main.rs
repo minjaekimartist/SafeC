@@ -7,19 +7,39 @@ use parser::*;
 fn main()
 {
     let args: Vec<String> = std::env::args().collect();
-
-    let mut is_link = false;
+    if args.len() < 2
+    {
+        println!("Usage: safe_c <file> [-D<definition>...] [-I<include_path>...] [-L<link_file>...] [--release]");
+        return;
+    }
     let mut is_release = false;
     let mut code = vec![];
+    let mut include_paths = vec![];
 
     for arg in &args[1..]
     {
-        if is_link
+        if arg.starts_with("-L") || arg.starts_with("-l")
         {
+            let link_files = arg.replace("-L", "").replace("-l", "");
+            if !(link_files.ends_with(".a") || link_files.ends_with(".lib") || link_files.ends_with(".so") || link_files.ends_with(".dylib") || link_files.ends_with(".dll")) { break; }
+            let mut input = vec![];
+            let mut file = std::fs::File::open(link_files).expect("Failed to open the file.");
+            std::io::Read::read_to_end(&mut file, &mut input).expect("Failed to read the file.");
             // Link Library
-            is_link = false;
         }
-        if arg == "-L" || arg == "-l" { is_link = true; }
+        else if arg.starts_with("-D")
+        {
+            let definition = arg.replace("-D", "");
+            if definition.contains("=") == false { break; }
+            let definition = definition.replace(" ", "").replace("=", " ");
+            code.append(&mut lexer(&format!("#define {}", definition)));
+        }
+        else if arg.starts_with("-I")
+        {
+            let include_path = arg.replace("-I", "");
+            if include_path.ends_with("/") == false { break; }
+            include_paths.push(include_path);
+        }
         else if arg == "--release" { is_release = true; }
         else
         {
@@ -30,9 +50,9 @@ fn main()
             code.append(&mut lexer(&text));
         }
     }
-    for line in &code
+    for file in &code
     {
-        parser(line);
+        parser(&include_paths, file);
     }
     if is_release
     {
