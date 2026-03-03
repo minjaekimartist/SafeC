@@ -35,62 +35,7 @@ int AudioBuffer::is_full() const {
     return 0;
 }
 
-unsigned long AudioBuffer::write_frames(const Fixed* src, unsigned long n) {
-    unsigned long space = self.writable_frames();
-    if (n > space) { n = space; }
-    unsigned long mask = self.cap_frames - (unsigned long)1;
-    unsigned long i = (unsigned long)0;
-    while (i < n) {
-        unsigned long slot = ((self.head + i) & mask) * self.channels;
-        unsigned long ch = (unsigned long)0;
-        while (ch < self.channels) {
-            unsafe { self.data[slot + ch] = src[i * self.channels + ch]; }
-            ch = ch + (unsigned long)1;
-        }
-        i = i + (unsigned long)1;
-    }
-    unsafe { asm volatile ("" : : : "memory"); }
-    self.head = self.head + n;
-    return n;
-}
-
-unsigned long AudioBuffer::read_frames(Fixed* dst, unsigned long n) {
-    unsigned long avail = self.readable_frames();
-    if (n > avail) { n = avail; }
-    unsigned long mask = self.cap_frames - (unsigned long)1;
-    unsigned long i = (unsigned long)0;
-    while (i < n) {
-        unsigned long slot = ((self.tail + i) & mask) * self.channels;
-        unsigned long ch = (unsigned long)0;
-        while (ch < self.channels) {
-            unsafe { dst[i * self.channels + ch] = self.data[slot + ch]; }
-            ch = ch + (unsigned long)1;
-        }
-        i = i + (unsigned long)1;
-    }
-    unsafe { asm volatile ("" : : : "memory"); }
-    self.tail = self.tail + n;
-    return n;
-}
-
-unsigned long AudioBuffer::peek_frames(Fixed* dst, unsigned long n) const {
-    unsigned long avail = self.readable_frames();
-    if (n > avail) { n = avail; }
-    unsigned long mask = self.cap_frames - (unsigned long)1;
-    unsigned long i = (unsigned long)0;
-    while (i < n) {
-        unsigned long slot = ((self.tail + i) & mask) * self.channels;
-        unsigned long ch = (unsigned long)0;
-        while (ch < self.channels) {
-            unsafe { dst[i * self.channels + ch] = self.data[slot + ch]; }
-            ch = ch + (unsigned long)1;
-        }
-        i = i + (unsigned long)1;
-    }
-    return n;
-}
-
-void AudioBuffer::mix_frames(const Fixed* src, unsigned long n) {
+unsigned long AudioBuffer::write_frames(&stack Fixed src, unsigned long n) {
     unsigned long space = self.writable_frames();
     if (n > space) { n = space; }
     unsigned long mask = self.cap_frames - (unsigned long)1;
@@ -100,8 +45,73 @@ void AudioBuffer::mix_frames(const Fixed* src, unsigned long n) {
         unsigned long ch = (unsigned long)0;
         while (ch < self.channels) {
             unsafe {
+                Fixed* ps = (Fixed*)src;
+                self.data[slot + ch] = ps[i * self.channels + ch];
+            }
+            ch = ch + (unsigned long)1;
+        }
+        i = i + (unsigned long)1;
+    }
+    unsafe { asm volatile ("" : : : "memory"); }
+    self.head = self.head + n;
+    return n;
+}
+
+unsigned long AudioBuffer::read_frames(&stack Fixed dst, unsigned long n) {
+    unsigned long avail = self.readable_frames();
+    if (n > avail) { n = avail; }
+    unsigned long mask = self.cap_frames - (unsigned long)1;
+    unsigned long i = (unsigned long)0;
+    while (i < n) {
+        unsigned long slot = ((self.tail + i) & mask) * self.channels;
+        unsigned long ch = (unsigned long)0;
+        while (ch < self.channels) {
+            unsafe {
+                Fixed* pd = (Fixed*)dst;
+                pd[i * self.channels + ch] = self.data[slot + ch];
+            }
+            ch = ch + (unsigned long)1;
+        }
+        i = i + (unsigned long)1;
+    }
+    unsafe { asm volatile ("" : : : "memory"); }
+    self.tail = self.tail + n;
+    return n;
+}
+
+unsigned long AudioBuffer::peek_frames(&stack Fixed dst, unsigned long n) const {
+    unsigned long avail = self.readable_frames();
+    if (n > avail) { n = avail; }
+    unsigned long mask = self.cap_frames - (unsigned long)1;
+    unsigned long i = (unsigned long)0;
+    while (i < n) {
+        unsigned long slot = ((self.tail + i) & mask) * self.channels;
+        unsigned long ch = (unsigned long)0;
+        while (ch < self.channels) {
+            unsafe {
+                Fixed* pd = (Fixed*)dst;
+                pd[i * self.channels + ch] = self.data[slot + ch];
+            }
+            ch = ch + (unsigned long)1;
+        }
+        i = i + (unsigned long)1;
+    }
+    return n;
+}
+
+void AudioBuffer::mix_frames(&stack Fixed src, unsigned long n) {
+    unsigned long space = self.writable_frames();
+    if (n > space) { n = space; }
+    unsigned long mask = self.cap_frames - (unsigned long)1;
+    unsigned long i = (unsigned long)0;
+    while (i < n) {
+        unsigned long slot = ((self.head + i) & mask) * self.channels;
+        unsigned long ch = (unsigned long)0;
+        while (ch < self.channels) {
+            unsafe {
+                Fixed* ps = (Fixed*)src;
                 self.data[slot + ch] = fixed_add(self.data[slot + ch],
-                                                  src[i * self.channels + ch]);
+                                                  ps[i * self.channels + ch]);
             }
             ch = ch + (unsigned long)1;
         }

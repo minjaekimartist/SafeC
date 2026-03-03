@@ -44,4 +44,4 @@ struct TimerWheel {
 };
 
 // Initialise a TimerWheel to a clean state (all slots free, tick = 0).
-void timer_wheel_init(struct TimerWheel* tw);
+void timer_wheel_init(&stack TimerWheel tw);

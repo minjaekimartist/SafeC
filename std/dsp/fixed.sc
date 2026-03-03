@@ -4,22 +4,22 @@
 newtype Fixed = int;
 
 Fixed fixed_from_int(int x) {
-    return (Fixed)(x << 16);
+    return (Fixed)(x << 24);
 }
 
 Fixed fixed_from_float(double f) {
-    // Multiply by 65536.0 and cast to int to get Q16.16 representation.
-    int raw = (int)(f * 65536.0);
+    // Multiply by 2^24 and cast to int to get Q8.24 representation.
+    int raw = (int)(f * 16777216.0);
     return (Fixed)raw;
 }
 
 int fixed_to_int(Fixed x) {
     // Arithmetic right shift drops the fractional bits.
-    return (int)x >> 16;
+    return (int)x >> 24;
 }
 
 double fixed_to_float(Fixed x) {
-    return (double)(int)x / 65536.0;
+    return (double)(int)x / 16777216.0;
 }
 
 Fixed fixed_add(Fixed a, Fixed b) {
@@ -33,12 +33,12 @@ Fixed fixed_sub(Fixed a, Fixed b) {
 Fixed fixed_mul(Fixed a, Fixed b) {
     // Promote to 64-bit to avoid intermediate overflow.
     long long product = (long long)(int)a * (long long)(int)b;
-    return (Fixed)(int)(product >> 16);
+    return (Fixed)(int)(product >> 24);
 }
 
 Fixed fixed_div(Fixed a, Fixed b) {
-    // Shift a up by 16 before dividing so the result stays in Q16.16.
-    long long num = (long long)(int)a << 16;
+    // Shift a up by 24 before dividing so the result stays in Q8.24.
+    long long num = (long long)(int)a << 24;
     return (Fixed)(int)(num / (long long)(int)b);
 }
 
@@ -54,27 +54,24 @@ Fixed fixed_neg(Fixed x) {
     return (Fixed)(-(int)x);
 }
 
-// Newton-Raphson integer square root on Q16.16.
-// We compute sqrt(x) in Q16.16 by treating the underlying int as a Q32 value
-// and performing 3 Newton iterations: r = (r + x/r) / 2.
+// Newton-Raphson integer square root on Q8.24.
+// We compute sqrt(x) in Q8.24 by treating the underlying int as a Q32 value
+// and performing 4 Newton iterations: r = (r + x/r) / 2.
 Fixed fixed_sqrt(Fixed x) {
     if ((int)x <= 0) {
         return (Fixed)0;
     }
 
-    // Initial guess: use the integer sqrt of the raw value as a starting point
-    // then scale appropriately.  A safe initial estimate is (raw >> 8) which
-    // gives a value in roughly the right Q16.16 ballpark.
+    // Initial guess: shift raw right 12 bits (midpoint of the
+    // Q24 fractional scale).
     long long raw = (long long)(int)x;
-
-    // Start with a coarse estimate: shift raw right 8 bits (midpoint of the
-    // Q16 fractional scale).
-    long long r = raw >> 8;
+    long long r = raw >> 12;
     if (r == 0) {
         r = 1;
     }
 
-    // 3 Newton-Raphson iterations: r = (r + raw/r) / 2
+    // 4 Newton-Raphson iterations for Q8.24 precision.
+    r = (r + raw / r) / 2;
     r = (r + raw / r) / 2;
     r = (r + raw / r) / 2;
     r = (r + raw / r) / 2;
